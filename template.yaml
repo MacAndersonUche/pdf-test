@@ -1,0 +1,53 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Description: >
+  pdf-testerv
+
+  Sample SAM Template for pdf-testerv
+
+# More info about Globals: https://github.com/awslabs/serverless-application-model/blob/master/docs/globals.rst
+Globals:
+  Function:
+    Timeout: 120
+    MemorySize: 3008
+
+Resources:
+  PDFApi:
+    Type: AWS::Serverless::Api
+    Properties:
+      StageName: dev
+      Cors:
+        AllowMethods: "'GET,POST,OPTIONS'"
+        AllowHeaders: "'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token'"
+        AllowOrigin: "'*'"
+    BinaryMediaTypes:
+      - application/pdf
+
+  StatementsFunction:
+    Type: AWS::Serverless::Function # More info about Function Resource: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#awsserverlessfunction
+    Properties:
+      FunctionName: banking-statements-tester
+      CodeUri: hello-world/
+      Handler: app.handler
+      Runtime: nodejs16.x
+      Architectures:
+      - x86_64
+      Layers:
+        - !Sub 'arn:aws:lambda:us-east-1:947947716257:layer:chromium:1'
+      Events:
+        List:
+          Type: Api
+          Properties:
+            Path: /v1/statements
+            Method: GET
+            RestApiId: !Ref PDFApi
+
+Outputs:
+  ApiDefaultEndpoint:
+    Description: 'API Gateway default URL'
+    Value: !Sub 'https://${PDFApi}.execute-api.${AWS::Region}.amazonaws.com/dev/'
+
+  StatementsFunction:
+    Description: Hello World Lambda Function ARN
+    Value: !GetAtt StatementsFunction.Arn
+
